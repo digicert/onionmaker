@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 
 import argparse
+import base64
 import re
 import secrets
-import base64
-
 from hashlib import sha3_256
+
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519
-from pyasn1.type import univ, char
 from pyasn1.codec.der.encoder import encode
-
+from pyasn1.type import univ
 from pyasn1_alt_modules import rfc2985, rfc2986, rfc8410, rfc5280
 
 OID_CABF_CA_SIGNING_NONCE = univ.ObjectIdentifier('2.23.140.41')
@@ -155,6 +154,6 @@ if __name__ == '__main__':
 
     csr_der = encode(csr_asn1)
 
-    csr_pem = x509.load_der_x509_csr(csr_der)
+    csr_crypto = x509.load_der_x509_csr(csr_der)
 
-    print(csr_pem.public_bytes(serialization.Encoding.PEM).decode('us-ascii'))
+    print(csr_crypto.public_bytes(serialization.Encoding.PEM).decode('us-ascii'))
