@@ -1,0 +1,3 @@
+pyasn1
+pyasn1_alt_modules
+cryptography
