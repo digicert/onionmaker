@@ -1,4 +1,7 @@
-from setuptools import setup
+from setuptools import setup, Extension
+
+
+ed25519_ext = Extension('')
 
 setup(
     name='onion-maker',
@@ -13,6 +16,5 @@ setup(
     install_requires=[
         'pyasn1',
         'pyasn1_alt_modules',
-        'cryptography'
     ],
 )
