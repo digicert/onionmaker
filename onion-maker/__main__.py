@@ -5,12 +5,14 @@ import base64
 import os.path
 import re
 import secrets
-from os import path
 from hashlib import sha3_256
+from os import path
 
 from pyasn1.codec.der.encoder import encode
 from pyasn1.type import univ
 from pyasn1_alt_modules import rfc2985, rfc2986, rfc8410, rfc5280
+
+import ed25519
 
 OID_CABF_CA_SIGNING_NONCE = univ.ObjectIdentifier('2.23.140.41')
 OID_CABF_CA_APPLICANT_NONCE = univ.ObjectIdentifier('2.23.140.42')
@@ -54,7 +56,16 @@ def _read_key_file(dir_path, filename, key_type):
         if not file_octets.startswith(b'== ed25519v1-' + key_type.encode('us-ascii') + b': type0 ==\x00\x00\x00'):
             raise ValueError(f'"{key_path}" does not start with magic bytes')
 
-        return file_octets[32:]
+        key_octets = file_octets[32:]
+
+        if key_type == 'secret':
+            if len(key_octets) != 64:
+                raise ValueError('Invalid private key length')
+        else:
+            if len(key_octets) != 32:
+                raise ValueError('Invalid public key length')
+
+        return key_octets
 
 
 def _generate_applicant_signing_nonce():
@@ -136,7 +147,7 @@ def _create_certification_request_info(public_key_octets, ca_signing_nonce_str, 
 
     cri['attributes'].append(_create_octet_string_attribute(OID_CABF_CA_SIGNING_NONCE, ca_signing_nonce_str))
     cri['attributes'].append(_create_octet_string_attribute(OID_CABF_CA_APPLICANT_NONCE, applicant_signing_nonce_str))
-    cri['attributes'].append(_create_san_extension_request(public_key))
+    cri['attributes'].append(_create_san_extension_request(public_key_octets))
 
     return cri
 
@@ -144,7 +155,9 @@ def _create_certification_request_info(public_key_octets, ca_signing_nonce_str, 
 def _sign_certification_request(private_key_octets, certification_request_info):
     cri_der = encode(certification_request_info)
 
-    signature_hex = SigningKey(private_key_octets).sign(cri_der).hex()
+    public_key_octets = certification_request_info['subjectPKInfo']['subjectPublicKey'].asOctets()
+
+    signature_hex = ed25519.sign(public_key_octets, private_key_octets, cri_der).hex()
 
     csr = rfc2986.CertificationRequest()
     csr['certificationRequestInfo'] = certification_request_info
@@ -156,18 +169,22 @@ def _sign_certification_request(private_key_octets, certification_request_info):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='onion-maker')
-    parser.add_argument('random_value', help='The Random Value supplied by the CA', type=_validate_random_value)
-    parser.add_argument('hidden_service_dir', type=_validate_service_dir, help='The directory for the Tor v3 service')
+    parser.add_argument('random_value', help='The Random Value supplied by the CA')
+    parser.add_argument('hidden_service_dir', nargs='?',
+                        default='/var/lib/tor/hidden_service', help='The directory for the Tor v3 service')
 
     args = parser.parse_args()
 
-    private_key = _read_key_file(args.hidden_service_dir, PRIVATE_KEY_FILENAME, 'secret')
-    public_key = _read_key_file(args.hidden_service_dir, PUBLIC_KEY_FILENAME, 'public')
+    _validate_random_value(args.random_value)
+    _validate_service_dir(args.hidden_service_dir)
 
-    certification_request_info = _create_certification_request_info(public_key, args.random_value,
+    private_key_octets = _read_key_file(args.hidden_service_dir, PRIVATE_KEY_FILENAME, 'secret')
+    public_key_octets = _read_key_file(args.hidden_service_dir, PUBLIC_KEY_FILENAME, 'public')
+
+    certification_request_info = _create_certification_request_info(public_key_octets, args.random_value,
                                                                     _generate_applicant_signing_nonce())
 
-    csr_asn1 = _sign_certification_request(private_key, certification_request_info)
+    csr_asn1 = _sign_certification_request(private_key_octets, certification_request_info)
 
     csr_der = encode(csr_asn1)
 

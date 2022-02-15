@@ -1,7 +1,13 @@
 from setuptools import setup, Extension
+import glob
+import platform
 
 
-ed25519_ext = Extension('')
+ed25519_ext = Extension(name='ed25519',
+                        sources=['onion-maker/ed25519-ext.c'] + glob.glob('ed25519/src/*.c'),
+                        include_dirs=['ed25519/src'],
+                        libraries=[lib_name for lib_name in ['advapi32'] if platform.system() == 'Windows']
+                        )
 
 setup(
     name='onion-maker',
@@ -17,4 +23,5 @@ setup(
         'pyasn1',
         'pyasn1_alt_modules',
     ],
+    ext_modules=[ed25519_ext]
 )
