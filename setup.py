@@ -3,6 +3,10 @@ import glob
 import platform
 
 
+with open('README.md', 'r', encoding='utf8') as f:
+    long_description=f.read()
+
+
 ed25519_ext = Extension(name='onionmaker.ed25519',
                         sources=(
                                     ['onionmaker/ed25519/ed25519-ext.c'] +
@@ -14,7 +18,7 @@ ed25519_ext = Extension(name='onionmaker.ed25519',
 
 setup(
     name='onionmaker',
-    version='0.1',
+    version='0.2',
     packages=['onionmaker'],
     url='https://github.com/digicert/onionmaker',
     license='MIT',
@@ -22,6 +26,8 @@ setup(
     author_email='corey.bonnell@digicert.com',
     description='A utility to generate CSRs suitable for validating Onion Domain Names per Appendix B of the '
                 'CA/Browser Forum Baseline Requirements ',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     install_requires=[
         'pyasn1',
         'pyasn1_alt_modules',
