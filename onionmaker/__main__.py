@@ -22,7 +22,7 @@ APPLICANT_SIGNING_NONCE_OCTET_COUNT = 16
 PUBLIC_KEY_FILENAME = 'hs_ed25519_public_key'
 PRIVATE_KEY_FILENAME = 'hs_ed25519_secret_key'
 
-RANDOM_VALUE_REGEX = re.compile(r'^[a-z0-9]{32}$', re.IGNORECASE)
+RANDOM_VALUE_REGEX = re.compile(r'^[a-z0-9_]{32}$', re.IGNORECASE)
 
 
 def _validate_random_value(value):
