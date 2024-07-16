@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3 - 2024-07-16
+
+### Fixes
+
+- Support _ in the verification token (#8 - reported and fixed by @kousiknandy)
+
 ## 0.2 - 2024-03-27
 
 ### New features/enhancements
