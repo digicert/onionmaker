@@ -18,7 +18,7 @@ ed25519_ext = Extension(name='onionmaker.ed25519',
 
 setup(
     name='onionmaker',
-    version='0.2',
+    version='0.3',
     packages=['onionmaker'],
     url='https://github.com/digicert/onionmaker',
     license='MIT',
